@@ -39,7 +39,10 @@ DATABASE_URI = os.getenv(
 #  P R O D U C T   M O D E L   T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
+
+
 class TestProductModel(unittest.TestCase):
+
     """Test Cases for Product Model"""
 
     @classmethod
@@ -193,8 +196,8 @@ class TestProductModel(unittest.TestCase):
         """Test the representation of a product"""
         product = Product(name="Foo", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
         self.assertEqual(str(product), '<Product Foo id=[None]>')
-    
-    def test_update_without_an_ID(self):
+
+    def test_update_without_an_id(self):
         """It should give DataValidationError update without ID"""
         product = ProductFactory()
         product.create()
@@ -211,11 +214,11 @@ class TestProductModel(unittest.TestCase):
         product.create()
         self.assertIsNotNone(product.id)
         to_dict = product.serialize()
-        self.assertEqual(to_dict['id'],product.id)
-        self.assertEqual(to_dict['description'],product.description)
-        self.assertEqual(Decimal(to_dict['price']),product.price)
-        self.assertEqual(to_dict['available'],product.available)
-        self.assertEqual(to_dict['category'][0],product.category.name[0])
+        self.assertEqual(to_dict['id'], product.id)
+        self.assertEqual(to_dict['description'], product.description)
+        self.assertEqual(Decimal(to_dict['price']), product.price)
+        self.assertEqual(to_dict['available'], product.available)
+        self.assertEqual(to_dict['category'][0], product.category.name[0])
 
     def test_deserialize(self):
         """testing deserializes a dict into a product"""
@@ -227,38 +230,73 @@ class TestProductModel(unittest.TestCase):
         result = Product()
         result.deserialize(data)
         data['id'] = result.id
-        self.assertEqual(data['description'],result.description)
-        self.assertEqual(Decimal(data['price']),result.price)
-        self.assertEqual(data['available'],result.available)
-        self.assertEqual(data['category'][0],result.category.name[0])
+        self.assertEqual(data['description'], result.description)
+        self.assertEqual(Decimal(data['price']), result.price)
+        self.assertEqual(data['available'], result.available)
+        self.assertEqual(data['category'][0], result.category.name[0])
 
     def test_availability_nonboolean(self):
         """testing deserialize a product with non-boolean availabity"""
-        product = {"name":"Fedora", "description":"A red hat", "price":12.50, "available":'Bool', "category":Category.CLOTHS}
-        self.assertRaises(DataValidationError, Product().deserialize(product))
+        invalid_data = {"name": "Fedora", "description": "A red hat", "price": 12.50,
+                   "available": 'Bool', "category": Category.CLOTHS}
+        test = Product()
+        with self.assertRaises(DataValidationError):
+            test.deserialize(invalid_data)
 
     def test_invalid_attribute(self):
-        """testing deserialize a product with wrong attibute"""
-        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
-        data = product.serialize()
-        data['availability'] = data.pop('available')
-        self.assertRaises(DataValidationError, Product().deserialize(data)) 
+        """testing deserialize a product with wrong attributes"""
+        product = Product()
+        invalid_data = {
+            "name": "Test Product",
+            "description": "This is a test product",
+            "price": "19.99",
+            "available": True
+            "category": "Category.CLOTHS"
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(invalid_data)
 
+    def test_invalid_key(self):
+        """testing deserialize a product with invalid keys"""
+        product = Product()
+        invalid_data = {
+            "name": "Test Product",
+            "description": "This is a test product",
+            "price": "19.99",
+            "BOOLEAN": True,
+            "category": Category.CLOTHS
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(invalid_data)
+
+    def test_invalid_product_type(self):
+        """testing deserialize a product with invalid type"""
+        product = Product()
+        invalid_data = {
+            "name": "Test Product",
+            "description": "This is a test product",
+            "price": None,
+            "BOOLEAN": None,
+            "category": Category.CLOTHS
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(invalid_data)
 
     def test_find_by_price(self):
         """It should Find Products by price if string convert to number"""
         products = ProductFactory.create_batch(10)
         for product in products:
             product.create()
-        price = product[0].price
+        price = products[0].price
         count = len([product for product in products if product.price == price])
         found = Product.find_by_price(price)
         self.assertEqual(found.count(), count)
-        self.assertEqual(product[0].price, price)
+        for product in found:
+            self.assertEqual(product.price, price)
         # testing input as a string instead of a decimal
-        price_str = str(product[1].price)
+        price_str = str(products[1].price)
         count_str = len([product for product in products if product.price == Decimal(price_str)])
         found_str = Product.find_by_price(price_str)
         self.assertEqual(found_str.count(), count_str)
-        self.assertEqual(product[1].price, Decimal(price_str))       
-
+        for product in found_str:
+            self.assertEqual(product.price, Decimal(price_str))
