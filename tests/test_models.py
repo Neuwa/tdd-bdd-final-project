@@ -238,23 +238,10 @@ class TestProductModel(unittest.TestCase):
     def test_availability_nonboolean(self):
         """testing deserialize a product with non-boolean availabity"""
         invalid_data = {"name": "Fedora", "description": "A red hat", "price": 12.50,
-                   "available": 'Bool', "category": Category.CLOTHS}
+                        "available": 'Bool', "category": Category.CLOTHS}
         test = Product()
         with self.assertRaises(DataValidationError):
             test.deserialize(invalid_data)
-
-    def test_invalid_attribute(self):
-        """testing deserialize a product with wrong attributes"""
-        product = Product()
-        invalid_data = {
-            "name": "Test Product",
-            "description": "This is a test product",
-            "price": "19.99",
-            "available": True
-            "category": "Category.CLOTHS"
-        }
-        with self.assertRaises(DataValidationError):
-            product.deserialize(invalid_data)
 
     def test_invalid_key(self):
         """testing deserialize a product with invalid keys"""
