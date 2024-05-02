@@ -269,6 +269,19 @@ class TestProductModel(unittest.TestCase):
         with self.assertRaises(DataValidationError):
             product.deserialize(invalid_data)
 
+    def test_invalid_attribute(self):
+        """testing deserialize a product with invalid attribute"""
+        product = Product()
+        invalid_data = {
+            "name": "Test Product",
+            "description": "This is a test product",
+            "price": 11.80,
+            "available": False,
+            "category": "BOO"
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(invalid_data)
+
     def test_find_by_price(self):
         """It should Find Products by price if string convert to number"""
         products = ProductFactory.create_batch(10)

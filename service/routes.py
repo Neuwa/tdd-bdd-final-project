@@ -95,20 +95,6 @@ def create_products():
 
 
 ######################################################################
-# LIST ALL PRODUCTS
-######################################################################
-@app.route("/products", methods=["GET"])
-def list_products():
-    """Returns a list of Products"""
-    app.logger.info("Request to list Products...")
-
-    products = Product.all()
-
-    results = [product.serialize() for product in products]
-    app.logger.info("[%s] Products returned", len(results))
-    return results, status.HTTP_200_OK
-
-######################################################################
 # R E A D   A   P R O D U C T
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["GET"])
@@ -123,6 +109,7 @@ def get_products(product_id):
         abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
     app.logger.info("Returning product: %s", product.name)
     return product.serialize(), status.HTTP_200_OK
+
 
 ######################################################################
 # UPDATE AN EXISTING PRODUCT
@@ -146,9 +133,11 @@ def update_products(product_id):
     product.update()
     return product.serialize(), status.HTTP_200_OK
 
+
 ######################################################################
 # DELETE A PRODUCT
 ######################################################################
+
 @app.route("/products/<int:product_id>", methods=["DELETE"])
 def delete_products(product_id):
     """
@@ -164,69 +153,39 @@ def delete_products(product_id):
 
     return "", status.HTTP_204_NO_CONTENT
 
+
 ######################################################################
-# LIST BY NAME
+# LIST PRODUCTS
 ######################################################################
+
 @app.route("/products", methods=["GET"])
-def query_by_name():
-    """Returns a product with queried name"""
-    app.logger.info("Request to list Products by queried name")
+def list_products():
+    """Returns a list of Products"""
+    app.logger.info("Request to list Products...")
 
     products = []
     name = request.args.get("name")
+    category = request.args.get("category")
+    available = request.args.get("available")
 
     if name:
         app.logger.info("Find by name: %s", name)
         products = Product.find_by_name(name)
-    else:
-        app.logger.info("Find all")
-        products = Product.all() 
-    results = [product.serialize() for product in products]
-    app.logger.info("[%s] Products returned", len(results))
-    return results, status.HTTP_200_OK
-
-######################################################################
-# LIST BY CATEGORY
-######################################################################
-@app.route("/products", methods=["GET"])
-def query_by_category():
-    """Returns Products with queried category"""
-    app.logger.info("Request to list Products by queried category")
-    products = []
-    category = request.args.get("category")
-
-    if category:
+    elif category:
         app.logger.info("Find by category: %s", category)
         # create enum from string
         category_value = getattr(Category, category.upper())
         products = Product.find_by_category(category_value)
-    else:
-        app.logger.info("Find all")
-        products = Product.all()
-    results = [product.serialize() for product in products]
-    app.logger.info("[%s] Products returned", len(results))
-    return results, status.HTTP_200_OK
-
-######################################################################
-# LIST BY AVAILABILITY
-######################################################################
-@app.route("/products", methods=["GET"])
-def query_by_availability():
-    """Returns Products with queried availability"""
-    app.logger.info("Request to list Products by availability")
-
-    products = []
-    available = request.args.get("available")
-
-    if available:
+    elif available:
         app.logger.info("Find by available: %s", available)
         # create bool from string
         available_value = available.lower() in ["true", "yes", "1"]
         products = Product.find_by_availability(available_value)
-        print(len(products))
     else:
         app.logger.info("Find all")
         products = Product.all()
+
     results = [product.serialize() for product in products]
     app.logger.info("[%s] Products returned", len(results))
+
     return results, status.HTTP_200_OK
